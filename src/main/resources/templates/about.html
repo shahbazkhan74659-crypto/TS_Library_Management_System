@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About | TS Library</title>
+
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body>
+
+<div class="layout">
+
+    <div th:replace="fragments/sidebar :: sidebar"></div>
+
+    <div class="content">
+
+        <h1 class="page-title">About TS Library</h1>
+
+        <div class="about-card">
+
+            <h2>Library Management System</h2>
+
+            <p>
+                TS Library is a Library Management System designed to help librarians
+                efficiently manage books, members, book issuing, and return operations.
+                The system provides a centralized platform for maintaining library records
+                and monitoring book availability.
+            </p>
+
+        </div>
+
+        <div class="about-card">
+
+            <h2>Key Features</h2>
+
+            <ul>
+                <li>Book Management</li>
+                <li>Member Management</li>
+                <li>Issue Book Tracking</li>
+                <li>Return Book Tracking</li>
+                <li>Dashboard Statistics</li>
+                <li>Availability Monitoring</li>
+            </ul>
+
+        </div>
+
+        <div class="about-card">
+
+            <h2>Development Team</h2>
+
+            <p>
+                Developed as an academic project to demonstrate the implementation of
+                a modern Library Management System using Spring Boot, Thymeleaf, MySQL,
+                HTML, CSS, and Java.
+            </p>
+
+        </div>
+
+        <div class="about-card">
+
+            <h2>Contact Information</h2>
+
+            <p>Email: library@tslibrary.com</p>
+            <p>Phone: +91 9876543210</p>
+            <p>Address: TS Library Management System</p>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script th:src="@{/js/app.js}"></script>
+
+</body>
+</html>
+

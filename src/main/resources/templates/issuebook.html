@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Issue Book | TS Library</title>
+
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body>
+
+<div class="layout">
+
+    <div th:replace="fragments/sidebar :: sidebar"></div>
+
+    <div class="content">
+
+        <h1 class="page-title">Issue Book</h1>
+
+        <div class="form-container">
+
+            <form th:action="@{/issuebook}" method="post">
+
+                <input type="hidden" name="bookId" th:value="${book.id}">
+                <input type="hidden" name="bookName" th:value="${book.title}">
+
+                <div class="form-group">
+                    <label>Book ID</label>
+                    <input type="text" th:value="${book.id}" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label>Book Name</label>
+                    <input type="text" th:value="${book.title}" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label>Select Member</label>
+
+                    <select name="memberId" required>
+
+                        <option value="">
+                            Select Member
+                        </option>
+
+                        <option
+                            th:each="member : ${members}"
+                            th:value="${member.id}"
+                            th:text="${member.name}">
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="form-group">
+                    <label>Due Date</label>
+                    <input type="date" name="dueDate" required>
+                </div>
+
+                <button type="submit" class="submit-btn">
+                    Issue Book
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script th:src="@{/js/app.js}"></script>
+
+</body>
+</html>
+

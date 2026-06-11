@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | TS Library</title>
+
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body>
+
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <div th:replace="fragments/sidebar :: sidebar"></div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+        <div class="page-header">
+            <h1>Dashboard</h1>
+
+            <div id="clock"></div>
+        </div>
+
+        <!-- STATISTICS CARDS -->
+        <div class="dashboard-cards">
+
+            <div class="card">
+                <h3>Total Books</h3>
+                <p th:text="${totalBooks}"></p>
+            </div>
+
+            <div class="card">
+                <h3>Issued Books</h3>
+                <p th:text="${issuedBooksCount}"></p>
+            </div>
+
+            <div class="card">
+                <h3>Available Books</h3>
+                <p th:text="${availableBooks}"></p>
+            </div>
+
+            <div class="card">
+                <h3>Total Members</h3>
+                <p th:text="${totalMembers}"></p>
+            </div>
+
+        </div>
+
+        <!-- ISSUED BOOKS TABLE -->
+
+        <div class="search-container">
+            <input type="text" class="search-input" placeholder="Search issued books...">
+        </div>
+
+        <div class="table-container">
+
+            <h2>Currently Issued Books</h2>
+
+            <table>
+
+                <thead>
+                <tr>
+                    <th>Issue ID</th>
+                    <th>Book ID</th>
+                    <th>Book Name</th>
+                    <th>Member ID</th>
+                    <th>Member Name</th>
+                    <th>Issue Date</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+
+                <tbody>
+
+                <tr th:each="issue : ${issuedBooks}">
+
+                    <td th:text="${issue.id}"></td>
+
+                    <td th:text="${issue.bookId}"></td>
+
+                    <td th:text="${issue.bookName}"></td>
+
+                    <td th:text="${issue.memberId}"></td>
+
+                    <td th:text="${issue.memberName}"></td>
+
+                    <td th:text="${issue.issueDate}"></td>
+
+                    <td th:text="${issue.dueDate}"></td>
+
+                    <td>
+                        <span th:if="${issue.dueDate.isBefore(T(java.time.LocalDate).now())}" class="status overdue">
+                            Overdue
+                        </span>
+
+                        <span th:unless="${issue.dueDate.isBefore(T(java.time.LocalDate).now())}" class="status issued">
+                            Issued
+                        </span>
+                    </td>
+
+                    <td>
+                        <a th:href="@{/returnbook/{id}(id=${issue.id})}" class="return-btn" onclick="return confirm('Return this book?')">
+                            Return
+                        </a>
+                    </td>
+
+                </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script th:src="@{/js/app.js}"></script>
+
+</body>
+</html>
+

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Returned Books</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body>
+
+<div class="layout">
+
+    <div th:replace="fragments/sidebar :: sidebar"></div>
+
+    <div class="content">
+
+        <h1 class="page-title">
+            Returned Books
+        </h1>
+
+        <div class="search-container">
+            <input type="text" class="search-input" placeholder="Search returned books...">
+        </div>
+
+        <div class="table-container">
+
+            <table>
+
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Book ID</th>
+                    <th>Book Name</th>
+                    <th>Member ID</th>
+                    <th>Member Name</th>
+                    <th>Issue Date</th>
+                    <th>Return Date</th>
+                </tr>
+                </thead>
+
+                <tbody>
+
+                <tr th:each="book : ${returnedBooks}">
+
+                    <td th:text="${book.id}"></td>
+
+                    <td th:text="${book.bookId}"></td>
+
+                    <td th:text="${book.bookName}"></td>
+
+                    <td th:text="${book.memberId}"></td>
+
+                    <td th:text="${book.memberName}"></td>
+
+                    <td th:text="${book.issueDate}"></td>
+
+                    <td th:text="${book.returnDate}"></td>
+
+                </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script th:src="@{/js/app.js}"></script>
+
+</body>
+</html>
+
