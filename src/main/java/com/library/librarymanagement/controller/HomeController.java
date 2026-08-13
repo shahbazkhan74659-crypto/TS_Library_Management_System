@@ -4,7 +4,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import com.library.entity.Member;
 import com.library.repository.MemberRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,18 +18,15 @@ import com.library.entity.ReturnedBook;
 import com.library.repository.ReturnedBookRepository;
 
 @Controller
+@RequiredArgsConstructor
 public class HomeController {
-    @Autowired
-    private MemberRepository memberRepository;
+    private final MemberRepository memberRepository;
 
-    @Autowired
-    private BookRepository bookRepository;
+    private final BookRepository bookRepository;
 
-    @Autowired
-    private IssuedBookRepository issuedBookRepository;
+    private final IssuedBookRepository issuedBookRepository;
 
-    @Autowired
-    private ReturnedBookRepository returnedBookRepository;
+    private final ReturnedBookRepository returnedBookRepository;
 
     @GetMapping("/")
     public String dashboard(Model model) {
