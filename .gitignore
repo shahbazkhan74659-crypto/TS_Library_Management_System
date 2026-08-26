@@ -33,3 +33,6 @@ build/
 .vscode/
 
 server.log
+
+### Environment / secrets ###
+.env
