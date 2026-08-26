@@ -103,6 +103,30 @@ src/main/resources/
 java -jar target/librarymanagement-0.0.1-SNAPSHOT.jar
 ```
 
+## Deployment (Render, free tier)
+
+The app is container-ready via the included `Dockerfile` (multi-stage: Maven build → JRE runtime) and `render.yaml` blueprint. Configuration is fully environment-driven, so no code changes are needed between local dev and production — the local defaults (`jdbc:mysql://localhost:3306/library_db`, port `8080`) only apply when the corresponding environment variable is unset.
+
+**Database — Aiven free MySQL:**
+
+1. Create a free MySQL service at [aiven.io](https://aiven.io) (no card required, no expiry).
+2. From its "Connection information" panel, note the host, port, database name, username, and password. Aiven requires TLS, so the JDBC URL needs `sslMode=REQUIRED`:
+   ```
+   jdbc:mysql://<host>:<port>/<database>?sslMode=REQUIRED
+   ```
+
+**Web service — Render:**
+
+1. New "Web Service" on [render.com](https://render.com), pointed at this repo, environment set to **Docker** (uses the included `Dockerfile`), plan **Free**. Using the included `render.yaml` as a Blueprint does this automatically.
+2. Set these environment variables in the Render dashboard:
+   - `SPRING_DATASOURCE_URL` — the Aiven JDBC URL above
+   - `DB_USERNAME` — Aiven username
+   - `DB_PASSWORD` — Aiven password
+   - Render supplies `PORT` automatically; the app already reads it (`server.port=${PORT:8080}`).
+3. Deploy. `spring.jpa.hibernate.ddl-auto=update` creates the schema on first boot — no manual migration needed.
+
+Render's free web services spin down after 15 minutes of inactivity and cold-start on the next request; a free [UptimeRobot](https://uptimerobot.com) monitor pinging the live URL avoids that if you want it always warm.
+
 ## Routes
 
 | Method | Path                | Description                        |
