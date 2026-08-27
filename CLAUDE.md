@@ -53,20 +53,16 @@ Render's free tier only offers managed PostgreSQL, not MySQL, and even that free
   - `DB_PASSWORD` = (see `.env` / Aiven console)
   - `PORT` is injected automatically by Render — do not set manually.
 
-### Current status: deploy BLOCKED — bad env var value on Render
+### Deploy history
 
-**As of 2026-08-26, two deploy attempts have failed** with the same Hibernate/HikariCP error:
-```
-Driver com.mysql.cj.jdbc.Driver claims to not accept jdbcUrl, jdbc:mysql://...aivenc | OURCE_URL | loud.com:20743/defaultdb?sslMode=REQUIRED
-```
+**Attempt 1-2 (2026-08-26): FIXED.** `SPRING_DATASOURCE_URL` in the Render dashboard was corrupted — a stray Windows clipboard-history (Win+V) paste spliced `| OURCE_URL |` into the middle of the JDBC URL. Caused a Hibernate/HikariCP "claims to not accept jdbcUrl" error. Fixed by retyping the env var fresh in the Render dashboard (not pasted from clipboard history) and re-verifying `DB_USERNAME`/`DB_PASSWORD`.
 
-Root cause, confirmed via a screenshot of Render's Environment tab: the `SPRING_DATASOURCE_URL` value actually stored in the Render dashboard is corrupted — it literally contains stray text (`| OURCE_URL |`, a fragment of "SPRING_DATASOURCE_URL" itself) spliced into the middle of the URL, between "aivenc" and "loud.com". This is not a log-viewer rendering artifact — it's the real stored value. Most likely cause: a stale Windows clipboard-history entry (Win+V) got pasted in instead of the clean value, and the same corrupted value was inadvertently re-saved on the second attempt too.
+**Attempt 3 (2026-08-27): FIXED.** Deploy logs showed the app successfully booting, connecting to Aiven over SSL, and serving real dashboard requests (proof the env var fix worked) — but Render still reported `==> Timed Out` followed by a graceful shutdown and `Failed`. Root cause: `render.yaml`'s `healthCheckPath: /` pointed at `HomeController.dashboard()`, which runs 5 DB round-trips (three counts + two full-table `findAll`s) against the remote Aiven DB on *every* health-check hit — measured at ~2.5s per request (mostly Aiven network latency), vs. 18ms for a DB-free response. Render's repeated health-check polling against that heavy endpoint blew the deploy's health-check timeout even though the app was actually healthy.
 
-**Next steps to unblock (deferred to tomorrow per owner):**
-1. Render dashboard → service → Environment → click into `SPRING_DATASOURCE_URL` → select all text in that field → delete completely.
-2. Type or freshly copy (not from clipboard history) exactly: `jdbc:mysql://mysql-library0921-shahbazkhan74659-c4a3.b.aivencloud.com:20743/defaultdb?sslMode=REQUIRED`
-3. Visually confirm the field reads as one clean line with no `|` or `OURCE_URL` fragments before saving.
-4. Double-check `DB_USERNAME`/`DB_PASSWORD` the same way, just in case.
-5. Save, rebuild, and deploy.
-6. Once live: confirm `/`, `/books`, `/about` on the Render URL; optionally add a free UptimeRobot monitor pinging it (Render free tier spins down after 15 min idle).
-7. Add the live Render URL + this repo URL as a real `Project` row in the Portfolio (see "Relationship to the Portfolio project" above).
+Fix (commit `0a2441e`): added a plain `GET /health` endpoint (`HealthController`, no DB access, ResponseEntity.ok("OK")) and changed `render.yaml`'s `healthCheckPath` to `/health`. Verified locally: rebuilt the Docker image, ran it against the real Aiven DB, confirmed `/health` returns 200 in ~18ms vs. `/`'s ~2.5s.
+
+### Next steps
+1. Trigger a fresh Render deploy (Blueprint or manual redeploy) picking up commit `0a2441e` — should now pass its health check quickly instead of timing out.
+2. Once live: confirm `/`, `/books`, `/about`, `/health` on the Render URL; optionally add a free UptimeRobot monitor pinging it (Render free tier spins down after 15 min idle).
+3. Consider whether the dashboard's per-request DB load (5 queries, 2 of them full-table `findAll`s) is worth optimizing later — it works, but every real visit to `/` still pays the ~2.5s Aiven round-trip cost the health check was avoiding.
+4. Add the live Render URL + this repo URL as a real `Project` row in the Portfolio (see "Relationship to the Portfolio project" above).
