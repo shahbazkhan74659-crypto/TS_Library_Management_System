@@ -61,8 +61,30 @@ Render's free tier only offers managed PostgreSQL, not MySQL, and even that free
 
 Fix (commit `0a2441e`): added a plain `GET /health` endpoint (`HealthController`, no DB access, ResponseEntity.ok("OK")) and changed `render.yaml`'s `healthCheckPath` to `/health`. Verified locally: rebuilt the Docker image, ran it against the real Aiven DB, confirmed `/health` returns 200 in ~18ms vs. `/`'s ~2.5s.
 
+### Current status: LIVE
+
+**As of 2026-08-27, the app is deployed and live at `https://ts-library.onrender.com`.** Confirmed via cold-start request (~75s — free tier spin-up after idle) returning 200 on `/`, and `/books` returning 200 with the seeded catalog. Free tier still spins down after 15 min idle, so the first hit after a quiet period will be slow; not a bug.
+
+### Local MySQL credentials lost & recovered (2026-08-27)
+
+The original local `library_db` credentials were forgotten. Recovered by resetting via MySQL's safe mode, **not** by guessing passwords:
+1. `Stop-Service MySQL80` (elevated PowerShell — admin required).
+2. Started `mysqld.exe` manually with `--skip-grant-tables --enable-named-pipe --socket=MySQL` (as a `Start-Job` background job, using the native `&` call operator rather than `Start-Process -ArgumentList`, which mangled quoted path arguments and silently forced `port: 0`).
+3. **Gotcha specific to Windows**: MySQL 8 auto-disables all networking when `--skip-grant-tables` is set, as a hardening measure. On Linux this still leaves a local Unix socket open; Windows has no equivalent unless `--enable-named-pipe` is passed explicitly — without it, the server aborts with `TCP/IP, --shared-memory, or --named-pipe should be configured on NT OS` even though nothing else is wrong.
+4. Connected over the named pipe (`mysql.exe -u root --protocol=pipe --socket=MySQL`) and created a fresh account: `'Shahbaz'@'localhost'` with full privileges on `library_db` (password known to the owner, not repeated here).
+5. Stopped the safe-mode job, restarted `MySQL80` normally, verified login over standard TCP.
+
+### Production data seeding (2026-08-27)
+
+Seeded Aiven (`defaultdb`) with the same content as local `library_db` (production was empty beforehand — a clean seed, not an overwrite):
+
+- **Schema drift found**: local `library_db`'s `books` table has 7 legacy columns (`description`, `genre`, `image_url`, `new_arrival`, `published_year`, `recommended`, `trending`) that no longer exist in the `Book` entity (`src/main/java/com/library/entity/Book.java`) or in Aiven's Hibernate-generated schema. These are harmless leftovers from an earlier iteration of the entity — Hibernate `ddl-auto=update` never drops columns, so they silently persisted locally. A direct `mysqldump` failed against Aiven with `Unknown column 'description'` until the dump was regenerated using only the entity's actual 7 columns (`id, author, category, title, available_quantity, published_date, quantity`).
+- `members`, `issued_books`, `returned_books` schemas matched exactly (dumped as-is).
+- Result verified by row count match (37 books, 11 members, 2 issued, 4 returned — identical on both sides) and by loading `/books` on the live Render URL and confirming seeded titles render.
+- **Not yet cleaned up**: local `library_db`'s `books` table still has those 7 unused columns. Harmless, but worth dropping at some point so local schema matches the entity/production exactly and this kind of drift doesn't resurface.
+
 ### Next steps
-1. Trigger a fresh Render deploy (Blueprint or manual redeploy) picking up commit `0a2441e` — should now pass its health check quickly instead of timing out.
-2. Once live: confirm `/`, `/books`, `/about`, `/health` on the Render URL; optionally add a free UptimeRobot monitor pinging it (Render free tier spins down after 15 min idle).
-3. Consider whether the dashboard's per-request DB load (5 queries, 2 of them full-table `findAll`s) is worth optimizing later — it works, but every real visit to `/` still pays the ~2.5s Aiven round-trip cost the health check was avoiding.
-4. Add the live Render URL + this repo URL as a real `Project` row in the Portfolio (see "Relationship to the Portfolio project" above).
+1. Add a free UptimeRobot monitor pinging `https://ts-library.onrender.com` (Render free tier spins down after 15 min idle — this avoids cold-start delays for real visitors).
+2. Consider whether the dashboard's per-request DB load (5 queries, 2 of them full-table `findAll`s) is worth optimizing later — it works, but every real visit to `/` still pays the ~2.5s Aiven round-trip cost the health check was avoiding.
+3. Optionally drop the 7 unused legacy columns from local `library_db`'s `books` table (see "Production data seeding" above).
+4. Add `https://ts-library.onrender.com` + this repo URL as a real `Project` row in the Portfolio (see "Relationship to the Portfolio project" above) — this was the original motivation for deploying this app at all.
